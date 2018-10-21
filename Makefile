@@ -1,8 +1,8 @@
 obj-m += fiber.o
 
 all: 
-	make -C /usr/src/linux-headers-4.9.0-7-common  M=$(PWD) modules
+	make -C /usr/src/linux-headers-$(shell uname -r)  M=$(PWD) modules
 
 clean: 
-	make -C /usr/src/linux-headers-4.9.0-7-common  M=$(PWD) clean
+	make -C /usr/src/linux-headers-%(shell uname -r)  M=$(PWD) clean
 

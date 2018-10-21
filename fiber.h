@@ -1,16 +1,19 @@
 #include <linux/kernel.h>
-#include <linux/errno.h>
 #include <linux/slab.h>
 #include <linux/module.h>
 #include <linux/init.h>
-#include <linux/proc_fs.h> //TODO this with proc. It should be init in fiber_init and fiber_exit
+#include <linux/proc_fs.h> 
+#include <linux/sched.h>
 #include <linux/signal.h>
 #include <linux/mm.h>
 #include <asm/thread_info.h>
+#include <asm/page.h>
 
 typedef unsigned int DWORD; 
 typedef void* FLS_data_t;
 typedef void* fiber_data_t;
+typedef void (*fiber_function) (void* fiber_data_t);
+typedef fiber_function fiber_function_t;
 /*
  * struct used to manage fiber
  */
@@ -18,21 +21,23 @@ typedef struct {
 	
 	unsigned short fid;
 	fiber_data_t fiber_data;
-	signal_struct *signal; //exception list
-	sighand_struct *sighand;
+	struct signal_struct *signal; //exception list
+	struct sighand_struct *sighand;
 	sigset_t blocked;
 	unsigned long stack_base; //stack data virtual memory base address
-	unsigned long stack_limit;
-	thread_info* info; //context information
+	unsigned long stack_end;
+	struct task_struct* info; 
+	fiber_function_t function;
+	unsigned long next_instruction; 
 	FLS_data_t FLS_data;
-	proc_dir_entry *fiber_entry;
+	struct proc_dir_entry *fiber_entry;
 	
 } fiber_t;
-	
+
 /*
  * functions used to initialize fibers
  */
-static void __init fiber_init(void);
+static int __init fiber_init(void);
 static void __exit fiber_exit(void);
 
 /*

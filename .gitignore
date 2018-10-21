@@ -1,0 +1,10 @@
+.fiber.ko.cmd
+.fiber.mod.o.cmd
+.fiber.o.cmd
+.tmp_versions/
+Module.symvers
+fiber.ko
+fiber.mod.c
+fiber.mod.o
+fiber.o
+modules.order
