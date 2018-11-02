@@ -53,6 +53,7 @@ int fiber_open(struct inode* inode, struct file *file){
 }
 
 int fiber_release(struct inode *inode, struct file *file){
+	cleanup_memory();
 	module_put(THIS_MODULE);
 	return 0;
 }

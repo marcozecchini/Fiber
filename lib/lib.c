@@ -121,3 +121,5 @@ long long FlsGetValue(long i){
 	ioctl(fiber_fd, cmd[U_FLS_GET], &f);
 	return ret;
 }
+
+//todo gdb debugging set environment LD_LIBRARY_PATH /home/marco/Documenti/Fiber/lib/

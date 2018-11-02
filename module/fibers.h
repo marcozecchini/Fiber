@@ -96,7 +96,7 @@ typedef struct {
 /*
  * functions used to initialize fibers
  */
-static int fiber_init(void);
+static int __init fiber_init(void);
 static void __exit fiber_exit(void);
 
 /*
@@ -117,8 +117,18 @@ void FlsSetValue(long i, long long value, pid_t tid);
 /*
  * Util function
  */
-thread_t* find_thread(pid_t pid, process_t *process);
-fiber_t *find_fiber(pid_t fid, process_t *process);
-process_t *find_process(pid_t pid);
+extern thread_t* find_thread(pid_t pid, process_t *process);
+extern fiber_t *find_fiber(pid_t fid, process_t *process);
+extern process_t *find_process(pid_t pid);
 int cleanup_memory(void);
+
+/** 
+ * External functions
+ */
+extern int register_probe_exit(void);
+extern int register_kret_proc_dir(void);
+extern int unregister_kret_proc_dir(void);
+extern int unregister_probe_exit(void);
+extern int register_kprobe_time(void);
+extern int unregister_kprobe_time(void);
 

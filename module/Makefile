@@ -1,5 +1,5 @@
 obj-m += fiber.o
-fiber-y := device.o fibers.o
+fiber-y := device.o fibers.o kprobe.o subfolder_proc.o
 
 all: 
 #	make -C /usr/src/linux-headers-$(shell uname -r)  M=$(PWD) modules

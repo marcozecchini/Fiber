@@ -39,7 +39,7 @@ static struct device* fiber_device = NULL;
 
 extern char buf_message[MSG_LEN];
 extern int Major;
-
+extern int cleanup_memory(void);
 int device_init(void);
 
 int device_unregister_connection(void);
