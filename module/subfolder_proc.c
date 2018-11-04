@@ -110,8 +110,8 @@ ssize_t proc_fiber_read(struct file *f, char __user *c, size_t len, loff_t *off)
 	fiber = find_fiber(fiber_id, process);
 	if (fiber == NULL) return -1;
 	
-	snprintf(proc_string, 512, "Currently running: %s\nStart address: %#010x\nCreator thread: %d\nNumber of current activations: %lu\nNumber of failed activation: %lld\nTotal execution time: %lu\n",
-				(fiber->attached_thread == NULL) ? "no" : "yes", (unsigned long) fiber->start_address, fiber->creator_thread, fiber->activation_counter, atomic64_read(&(fiber->failed_counter)), fiber->total_time);
+	snprintf(proc_string, 512, "Is the process currently running? %s\nCreator thread: %d\nStart address of fiber function: %#010x\nNumber of current activations: %lu\nNumber of failed activation: %lld\nTotal execution time is: %lu\n",
+				(fiber->attached_thread == NULL) ? "no" : "yes", fiber->stats.creator_thread, (unsigned long) fiber->stats.start_address, fiber->stats.activation_counter, atomic64_read(&(fiber->stats.failed_counter)), fiber->stats.total_time);
 	
 	if (*off >= strnlen(proc_string, 512)) return 0;
 	

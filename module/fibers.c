@@ -12,8 +12,6 @@ DEFINE_HASHTABLE(processes, 10);
 spinlock_t spin_process = __SPIN_LOCK_UNLOCKED(spin_process);
 unsigned long spin_flag;
 
-static atomic64_t next_fid;
-
 process_t *find_process(pid_t pid){
 	process_t* result;
 	hash_for_each_possible_rcu(processes, result, node , pid){
@@ -107,12 +105,12 @@ pid_t ConvertThreadToFiber(pid_t tid){
 		fiber->fid = atomic64_inc_return(&process->last_fiber_id);
 		hash_add_rcu(process->fibers, &(fiber->node), fiber->fid);
 		
-		fiber->start_address = (void*) current_pt_regs()->ip;
-		fiber->creator_thread = current->pid;
-		fiber->activation_counter = 1;
-		atomic64_set(&(fiber->failed_counter), 0);
+		fiber->stats.start_address = (void*) current_pt_regs()->ip;
+		fiber->stats.creator_thread = current->pid;
+		fiber->stats.activation_counter = 1;
+		atomic64_set(&(fiber->stats.failed_counter), 0);
 		copy_fxregs_to_kernel(&(fiber->fpu));
-		fiber->total_time = 0;
+		fiber->stats.total_time = 0;
 		snprintf(fiber->name, 128, "%d", fiber->fid);
 		
 		fiber->regs.sp = current_pt_regs()->sp;
@@ -154,20 +152,22 @@ pid_t CreateFiber(void* stack_base, unsigned long stack_size, fiber_function rou
 	hash_add_rcu(process->fibers, &(fiber->node), fiber->fid); //add the fiber to the hash
 	//Setup the new stack
 	fiber->stack_base = stack_base;
-	fiber->stack_size = (stack_size>=0) ? stack_size : 1;
+	fiber->stack_size = stack_size;
 	fiber->regs.sp = (long) (fiber->stack_base)+(fiber->stack_size)-8;
 	fiber->regs.bp = fiber->regs.sp;
 	
 	//set routine pointer and parameters in the proper fields
 	fiber->regs.ip = (long) routine_pointer;
 	fiber->regs.di = (long) fiber_data;
-	fiber->start_address = (void*) routine_pointer;
+	
+	//Statistics
+	fiber->stats.start_address = (void*) routine_pointer;
 	printk("Fiber created with stack_base %#016x, and ip %#016x", fiber->stack_base, fiber->regs.ip);
-	fiber->creator_thread = current->pid;
-	fiber->activation_counter = 1;
-	atomic64_set(&(fiber->failed_counter), 0);
+	fiber->stats.creator_thread = current->pid;
+	fiber->stats.activation_counter = 1;
+	atomic64_set(&(fiber->stats.failed_counter), 0);
 	copy_fxregs_to_kernel(&(fiber->fpu));
-	fiber->total_time = 0;
+	fiber->stats.total_time = 0;
 	snprintf(fiber->name, 128, "%d", fiber->fid);
 	
 	
@@ -194,11 +194,11 @@ int SwitchToFiber(pid_t fid, pid_t tid){
 	next_fiber = find_fiber(fid, process);
 	if (next_fiber == NULL) return FAILURE;
 	if (!spin_trylock(&next_fiber->lock) || next_fiber->attached_thread != NULL){
-		atomic64_inc(&(next_fiber->failed_counter));
+		atomic64_inc(&(next_fiber->stats.failed_counter));
 		return FAILURE;
 	}	
 	next_fiber->attached_thread = thread;
-	next_fiber->activation_counter++;
+	next_fiber->stats.activation_counter++;
 	
 	prev_fiber = (fiber_t*)thread->current_fiber;
 	thread->current_fiber = next_fiber;
@@ -211,7 +211,7 @@ int SwitchToFiber(pid_t fid, pid_t tid){
 	
 	//remove prev_fiber from thread
 	prev_fiber->attached_thread = NULL;
-	prev_fiber->total_time += current->utime;
+	prev_fiber->stats.total_time += current->utime;
 	spin_unlock(&prev_fiber->lock);
 	printk("Passing from fiber %d to fiber %d", prev_fiber->fid, next_fiber->fid);
 	//change cpu context
@@ -347,12 +347,14 @@ int cleanup_memory(void){
 		
 }
 
+/*
+ * Init and cleanup of fibers module.
+ */ 
+
 static int fiber_init(void){
 	device_init();
 	register_probe_exit();
-	register_kprobe_time();
 	register_kret_proc_dir();
-	atomic64_set(&(next_fid), 0);
 	printk("fiber installed", KBUILD_MODNAME);
 
 	return 0;
@@ -360,7 +362,6 @@ static int fiber_init(void){
 
 static void __exit fiber_exit(void){
 	printk("Cleaning up fiber interface", KBUILD_MODNAME);
-	unregister_kprobe_time();
 	unregister_kret_proc_dir();
 	unregister_probe_exit();
 	device_unregister_connection();

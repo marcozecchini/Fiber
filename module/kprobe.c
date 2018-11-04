@@ -12,17 +12,6 @@ int unregister_probe_exit(void){
 	return 0;
 }
 
-int register_kprobe_time(void){
-		kp_time.handler = fiber_time;
-		kp_time.kp.symbol_name = "finish_task_switch";
-		register_kretprobe(&kp_time);
-}
-
-int unregister_kprobe_time(void){
-	unregister_kretprobe(&kp_time);
-	return 0;
-}
-
 int exit_cleanup(struct kprobe *k, struct pt_regs *r){
 		process_t *process;
 		thread_t *thread;
@@ -72,48 +61,4 @@ int exit_cleanup(struct kprobe *k, struct pt_regs *r){
 				kfree(process);
 		}
 		return 0;
-}
-
-DEFINE_PER_CPU(struct task_struct *, prev_task) = NULL;
-
-int fiber_time(struct kretprobe_instance *k, struct pt_regs *r) {
-	
-	process_t *process;
-	thread_t *thread;
-	fiber_t *fiber;
-	struct task_struct *temp_prev;
-	
-	temp_prev = get_cpu_var(prev_task);
-	if (temp_prev == NULL){
-		put_cpu_var(prev_task);
-		end_not_our_fiber(prev_task, temp_task);
-		return 0;
-	}
-	
-	process = find_process(temp_prev->tgid);
-	if (process == NULL){
-			put_cpu_var(prev_task);
-			end_not_our_fiber(prev_task, temp_task);
-			return 0;
-	}
-	
-	thread = find_thread(temp_prev->pid, process);
-	if (thread == NULL){
-			put_cpu_var(prev_task);
-			end_not_our_fiber(prev_task, temp_task);
-			return 0;
-	}
-	
-	fiber = (fiber_t*)thread->current_fiber;
-	if (fiber == NULL){
-			put_cpu_var(prev_task);
-			end_not_our_fiber(prev_task, temp_task);
-			return 0;
-	}
-	
-	fiber->total_time += temp_prev->utime;
-	put_cpu_var(prev_task);
-	end_not_our_fiber(prev_task, temp_task);
-	return 0;
-	
 }

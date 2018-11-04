@@ -41,7 +41,18 @@ typedef struct {
 		process_t *parent_process;
 		void *current_fiber;
 } thread_t;
+/*
+ * Struct to manage fiber statistics
+ */ 
+ 
+struct fiber_stats {
 
+	void* start_address;
+	pid_t creator_thread;
+	unsigned long activation_counter;
+	atomic64_t failed_counter;
+	unsigned long total_time;
+};
 /*
  * struct used to manage fiber
  */
@@ -72,11 +83,7 @@ typedef struct {
 	struct list_head list;
 	
 	//For statistics to be inserted into /proc files
-	void* start_address;
-	pid_t creator_thread;
-	unsigned long activation_counter;
-	atomic64_t failed_counter;
-	unsigned long total_time;
+	struct fiber_stats stats;
 	
 } fiber_t;
 
@@ -129,6 +136,3 @@ extern int register_probe_exit(void);
 extern int register_kret_proc_dir(void);
 extern int unregister_kret_proc_dir(void);
 extern int unregister_probe_exit(void);
-extern int register_kprobe_time(void);
-extern int unregister_kprobe_time(void);
-
