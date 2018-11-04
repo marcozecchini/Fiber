@@ -27,8 +27,8 @@ typedef void (*fiber_function) (fiber_data_t);
 
 typedef struct {
 	pid_t pid;
-	DECLARE_HASHTABLE(threads, 8);
-	DECLARE_HASHTABLE(fibers, 8);
+	DECLARE_HASHTABLE(threads, 10);
+	DECLARE_HASHTABLE(fibers, 10);
 	struct hlist_node node;
 	atomic64_t last_fiber_id;
 	atomic64_t active_threads;

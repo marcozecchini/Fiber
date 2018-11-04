@@ -16,6 +16,8 @@ int device_init(void){
 			printk(KERN_ALERT "ERROR in creation of device class");
 			return PTR_ERR(fiber_class);
 	}
+	
+	
 	fiber_device = device_create(fiber_class, NULL, MKDEV(Major, 0), NULL, DEVICE_NAME);
 	if (IS_ERR(fiber_device)){
 		class_destroy(fiber_class);
@@ -59,7 +61,7 @@ int fiber_release(struct inode *inode, struct file *file){
 }
 
 long fiber_ioctl(struct file *file, unsigned int ioctl_num, unsigned long ioctl_param){
-	pid_t tid = current->tgid;
+	pid_t tid = current->pid;
 	long ret = 0;
 	arguments_fiber arg_fiber;
 	if (ioctl_num == CONVERT_THREAD){

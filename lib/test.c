@@ -23,7 +23,7 @@ void hello_1(void* par){
 void hello_2(void *par){
 	int *fibers = (int*)par;
 	for (int j = 0; j < 100000000;j++)
-		i = j;
+		printf("%d", j);
 	SwitchToFiber(*fibers);
 	SwitchToFiber(*fibers+1);
 }

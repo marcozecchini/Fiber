@@ -2,14 +2,13 @@
 #include "fibers.h"
 #include <linux/kernel.h>
 #include <linux/module.h>
-#define BAD 999
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Marco Zecchini <marcozecchini.2594@gmail.com>");
 MODULE_DESCRIPTION("This module was created to build a Fiber infrustructure"
 					"that can be used by the system");
 
-DEFINE_HASHTABLE(processes, 8);
+DEFINE_HASHTABLE(processes, 10);
 spinlock_t spin_process = __SPIN_LOCK_UNLOCKED(spin_process);
 unsigned long spin_flag;
 
@@ -131,11 +130,6 @@ pid_t CreateFiber(void* stack_base, unsigned long stack_size, fiber_function rou
 	fiber_t *fiber;
 	thread_t *thread;
 	process_t *process;
-			
-	if (stack_size > STACK_SIZE){
-		printk("Returning, bad initialization", KBUILD_MODNAME);
-		return -1;
-	}
 	
 	process = find_process(current->tgid);
 	if (process == NULL) return -1;
@@ -155,12 +149,12 @@ pid_t CreateFiber(void* stack_base, unsigned long stack_size, fiber_function rou
 	fiber->parent = process;
 	memset(fiber->FLS_data, 0, sizeof(long long) * MAX_FLS);
 	bitmap_zero(fiber->fls_bitmap, MAX_FLS);
-	memcpy(&(fiber->regs), current_pt_regs(), sizeof(struct pt_regs));
+	memcpy(&(fiber->regs), task_pt_regs(current), sizeof(struct pt_regs));
 	fiber->fid = atomic64_inc_return(&process->last_fiber_id); //new fiber id
 	hash_add_rcu(process->fibers, &(fiber->node), fiber->fid); //add the fiber to the hash
 	//Setup the new stack
 	fiber->stack_base = stack_base;
-	fiber->stack_size = stack_size;
+	fiber->stack_size = (stack_size>=0) ? stack_size : 1;
 	fiber->regs.sp = (long) (fiber->stack_base)+(fiber->stack_size)-8;
 	fiber->regs.bp = fiber->regs.sp;
 	
@@ -168,7 +162,7 @@ pid_t CreateFiber(void* stack_base, unsigned long stack_size, fiber_function rou
 	fiber->regs.ip = (long) routine_pointer;
 	fiber->regs.di = (long) fiber_data;
 	fiber->start_address = (void*) routine_pointer;
-	printk("Fiber created with stack_base %lu, and ip %ld", fiber->stack_base, fiber->regs.ip);
+	printk("Fiber created with stack_base %#016x, and ip %#016x", fiber->stack_base, fiber->regs.ip);
 	fiber->creator_thread = current->pid;
 	fiber->activation_counter = 1;
 	atomic64_set(&(fiber->failed_counter), 0);
@@ -209,7 +203,7 @@ int SwitchToFiber(pid_t fid, pid_t tid){
 	prev_fiber = (fiber_t*)thread->current_fiber;
 	thread->current_fiber = next_fiber;
 	
-	curr_regs = current_pt_regs();
+	curr_regs = task_pt_regs(current);
 	memcpy(&(prev_fiber->regs), curr_regs, sizeof(struct pt_regs));
 	//save FPU
 	prev_fpu = &(prev_fiber->fpu);
