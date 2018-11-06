@@ -9,3 +9,4 @@ fiber.mod.o
 fiber.o
 modules.order
 /2018-fibers/
+/2018-fibers-usr/

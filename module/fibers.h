@@ -77,10 +77,6 @@ typedef struct {
 	//to manage fls
 	long long FLS_data[MAX_FLS];
 	DECLARE_BITMAP(fls_bitmap, MAX_FLS);
-	//to deal with proc 
-	struct proc_dir_entry *fiber_entry;
-	//To know all the other active fiber
-	struct list_head list;
 	
 	//For statistics to be inserted into /proc files
 	struct fiber_stats stats;

@@ -147,7 +147,7 @@ pid_t CreateFiber(void* stack_base, unsigned long stack_size, fiber_function rou
 	fiber->parent = process;
 	memset(fiber->FLS_data, 0, sizeof(long long) * MAX_FLS);
 	bitmap_zero(fiber->fls_bitmap, MAX_FLS);
-	memcpy(&(fiber->regs), task_pt_regs(current), sizeof(struct pt_regs));
+	memcpy(&(fiber->regs), current_pt_regs(), sizeof(struct pt_regs));
 	fiber->fid = atomic64_inc_return(&process->last_fiber_id); //new fiber id
 	hash_add_rcu(process->fibers, &(fiber->node), fiber->fid); //add the fiber to the hash
 	//Setup the new stack
@@ -203,7 +203,7 @@ int SwitchToFiber(pid_t fid, pid_t tid){
 	prev_fiber = (fiber_t*)thread->current_fiber;
 	thread->current_fiber = next_fiber;
 	
-	curr_regs = task_pt_regs(current);
+	curr_regs = current_pt_regs();
 	memcpy(&(prev_fiber->regs), curr_regs, sizeof(struct pt_regs));
 	//save FPU
 	prev_fpu = &(prev_fiber->fpu);
