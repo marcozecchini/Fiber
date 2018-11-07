@@ -16,6 +16,10 @@
 #define U_FLS_SET 6
 #define CMDS 7
 
+/*
+ * Macros to init and close the device
+ */ 
+
 #define init_dev() do{\
 	fiber_fd = open("/dev/fiber_dev", O_RDWR);\
 	if (fiber_fd < 0){\
@@ -45,6 +49,9 @@
 
 #define close_lib() close(fiber_fd);
 
+/*
+ * Functions and data types implemented in lib.c
+ */
 typedef void* fiber_data_t;
 typedef void (*fiber_function) (fiber_data_t);
 
@@ -56,12 +63,13 @@ bool FlsFree(long i);
 void FlsSetValue(long long buf, long i);
 long long FlsGetValue(long i);
 
-
+//fiber file descriptor and list to store the commands code
 int fiber_fd;
 long cmd[CMDS];
 
-typedef void* fiber_data_t;
-typedef void (*fiber_function) (fiber_data_t);
+/*
+ * Struct to pass arguments to the fiber module
+ */ 
 typedef struct {
 	unsigned long stack_size;
 	void* stack_base;
@@ -71,5 +79,3 @@ typedef struct {
 	long long buffer;
 	pid_t fid;
 } arguments_fiber;
-
-

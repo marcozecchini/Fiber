@@ -125,7 +125,7 @@ extern fiber_t *find_fiber(pid_t fid, process_t *process);
 extern process_t *find_process(pid_t pid);
 int cleanup_memory(void);
 
-/** 
+/*
  * External functions
  */
 extern int register_probe_exit(void);

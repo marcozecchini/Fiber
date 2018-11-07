@@ -4,12 +4,14 @@
 #include <linux/module.h>
 #include <linux/uaccess.h>
 #include <linux/string.h>
+
 /*
- * API to interact with fibers
+ * Device name and class name
  */
 #define DEVICE_NAME "fiber_dev"
 #define CLASS_NAME "fiber_class"
 #define MSG_LEN 256
+
 /*
  * To deal with IOCTL function
  */
@@ -20,7 +22,10 @@
 #define FLS_FREE _IO(Major, 4)
 #define FLS_GET _IO(Major, 5)
 #define FLS_SET _IO(Major, 6)
-//Get fiber_arguments
+
+/* 
+ * Get fiber_arguments checking first
+ */
 #define get_arguments(fiber_arg, arg) do {\
 	if (!access_ok(VERIFY_READ, arg, sizeof(arguments_fiber))){ \
 		printk("Bad pointer to IOCTL");							\
@@ -31,9 +36,16 @@
 		return -1;												\
 	}															\
 } while(0)
+
+/*
+ * Print the commands to pass them to user space
+ */ 
 	
 #define print_commands() snprintf(buf_message, MSG_LEN, "%ld\n%ld\n%ld\n%ld\n%ld\n%ld\n%ld\n", CONVERT_THREAD, CREATE_FIBER, SWITCH_FIBER, FLS_ALLOC, FLS_FREE, FLS_GET, FLS_SET)
 	
+/*
+ * Global variables and external
+ */ 
 static struct class* fiber_class = NULL;
 static struct device* fiber_device = NULL;
 
@@ -41,6 +53,10 @@ extern char buf_message[MSG_LEN];
 extern int Major;
 extern int cleanup_memory(void);
 int device_init(void);
+
+/*
+ * Function to manage the character device
+ */
 
 int device_unregister_connection(void);
 

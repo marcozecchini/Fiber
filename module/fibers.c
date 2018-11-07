@@ -47,7 +47,6 @@ fiber_t *find_fiber(pid_t fid, process_t *process){
 }
 
 
-
 pid_t ConvertThreadToFiber(pid_t tid){
 		fiber_t *fiber;
 		thread_t *thread;
